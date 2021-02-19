@@ -13,7 +13,7 @@
 //function declarations
 GLFWwindow* InitialiseGLFW();
 void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow* window, VkInstance instance, VkDebugUtilsMessengerEXT debug_mesenger);
+void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_mesenger);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -31,17 +31,22 @@ int main() {
 	GLFWwindow* window;
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debug_messenger;
+	VkPhysicalDevice physical_device;
+	VkDevice device;
+	VkQueue graphics_queue;
 
 	//define them
 	window = InitialiseGLFW();
 	instance = create_vk_instance();
 	setup_debug_messenger(instance, &debug_messenger);
-
+	physical_device = pick_physical_device(instance);
+	device = create_logical_device(physical_device);
+	vkGetDeviceQueue(device, find_queue_families(physical_device).graphics_family, 0, &graphics_queue);
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
 	mainLoop(window);
 	
-	CleanUp(window, instance, debug_messenger);
+	CleanUp(window, instance, device, debug_messenger);
 
 	return 0;
 }
@@ -60,7 +65,9 @@ void mainLoop(GLFWwindow* window) {
 	}
 }
 
-void CleanUp(GLFWwindow* window, VkInstance instance, VkDebugUtilsMessengerEXT debug_messenger) {
+void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger) {
+	vkDestroyDevice(device, NULL);
+
 	if (enableValidationLayers) {
 		DestroyDebugUtilsMessengerEXT(instance, debug_messenger, NULL);
 	}

@@ -14,6 +14,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 VkPhysicalDevice pick_physical_device(VkInstance instance);
 bool is_device_suitable(VkPhysicalDevice device);
 struct queue_family_indices find_queue_families(VkPhysicalDevice device);
+VkDevice create_logical_device(VkPhysicalDevice physical_device);
 
 struct queue_family_indices {
 	uint32_t graphics_family;

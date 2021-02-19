@@ -14,7 +14,7 @@
 const char* validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 const char* other_extensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
 
-//handy macro for gettin the size of an array in bytes at runtime
+//handy macro for gettin the size of an array in bytes at runtime, this cool
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 
 //a struct made to allow the get_required_extensions function to give both a list of extensions and
@@ -238,8 +238,8 @@ bool is_device_suitable(VkPhysicalDevice device){
 struct queue_family_indices find_queue_families(VkPhysicalDevice device){
 	struct queue_family_indices indices =
 	{
-		.graphics_family_set = 0,
-		.graphics_family = false
+		.graphics_family = 0,
+		.graphics_family_set = false
 	};
 
 	uint32_t family_count = 0;
@@ -257,4 +257,38 @@ struct queue_family_indices find_queue_families(VkPhysicalDevice device){
 	}
 
 	return indices;
+}
+
+VkDevice create_logical_device(VkPhysicalDevice physical_device){
+	struct queue_family_indices indices = find_queue_families(physical_device);
+
+	VkDeviceQueueCreateInfo queue_create_info = {0};
+	queue_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queue_create_info.queueFamilyIndex = indices.graphics_family;
+	queue_create_info.queueCount = 1;
+	float queue_priority = 1.0f;
+	queue_create_info.pQueuePriorities = &queue_priority;
+
+	VkPhysicalDeviceFeatures device_features = {VK_FALSE};
+
+	VkDeviceCreateInfo create_info = {
+		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+		.pQueueCreateInfos = &queue_create_info,
+		.queueCreateInfoCount = 1,
+		.pEnabledFeatures = &device_features
+	};
+
+	if (enableValidationLayers) {
+		create_info.enabledLayerCount = ARR_SIZE(validation_layers);
+		create_info.ppEnabledLayerNames = validation_layers;
+	} else {
+		create_info.enabledLayerCount = 0;
+	}
+
+	VkDevice device;
+
+	if (vkCreateDevice(physical_device, &create_info, NULL, &device) != VK_SUCCESS)
+		printf("Error: Failed to create logical device");
+
+	return device;
 }
