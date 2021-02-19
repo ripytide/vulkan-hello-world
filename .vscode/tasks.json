@@ -16,7 +16,7 @@
 				"-Wall",
 				"-Wextra",
 				"-o",
-				"${fileDirname}\\${fileBasenameNoExtension}.exe"
+				"program.exe"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"

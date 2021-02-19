@@ -75,21 +75,12 @@ VkInstance create_vk_instance() {
 
 void populate_debug_create_info(VkDebugUtilsMessengerCreateInfoEXT* create_info) {
 	create_info->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-	create_info->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	create_info->messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 	create_info->messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	create_info->pfnUserCallback = debug_callback;
 	create_info->pUserData = NULL; // Optional
 }
-void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debug_messenger) {
-	if (!enableValidationLayers) return;
 
-	VkDebugUtilsMessengerCreateInfoEXT create_info = { 0 };
-	populate_debug_create_info(&create_info);
-	
-	if (CreateDebugUtilsMessengerEXT(instance, &create_info, NULL, p_debug_messenger) != VK_SUCCESS) {
-		printf("Error: failed to set up debug messenger!");
-	}
-}
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
 	PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 	if (func) {
@@ -190,12 +181,23 @@ struct extension_info get_required_extensions() {
 
 	return ext;
 }
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
-	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-	void* pUserData) {
-	printf("Validation layer: %s", pCallbackData->pMessage);
+
+void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debug_messenger) {
+	if (!enableValidationLayers) return;
+
+	VkDebugUtilsMessengerCreateInfoEXT create_info = { 0 };
+	populate_debug_create_info(&create_info);
+	
+	if (CreateDebugUtilsMessengerEXT(instance, &create_info, NULL, p_debug_messenger) != VK_SUCCESS) {
+		printf("Error: failed to set up debug messenger!");
+	}
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+
+	static int count = 0;
+
+	printf("Current Count: %d\tSeverity: %d\tType: %d\tMessage: %s\n", ++count, messageSeverity, messageType, pCallbackData->pMessage);
 
 	return VK_FALSE;
 }
@@ -211,7 +213,7 @@ VkPhysicalDevice pick_physical_device(VkInstance instance){
 
 	vkEnumeratePhysicalDevices(instance, &device_count, devices);
 
-	for (int i = 0; i < device_count; i++){
+	for (unsigned int i = 0; i < device_count; i++){
 		if (is_device_suitable(devices[i]))
 			device = devices[i];
 	}
@@ -223,5 +225,36 @@ VkPhysicalDevice pick_physical_device(VkInstance instance){
 }
 
 bool is_device_suitable(VkPhysicalDevice device){
-	return true;
+	VkPhysicalDeviceProperties device_properties;
+   VkPhysicalDeviceFeatures device_features;
+   vkGetPhysicalDeviceProperties(device, &device_properties);
+   vkGetPhysicalDeviceFeatures(device, &device_features);
+
+	struct queue_family_indices indices = find_queue_families(device);
+
+	return device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && device_features.geometryShader && indices.graphics_family_set;
+}
+
+struct queue_family_indices find_queue_families(VkPhysicalDevice device){
+	struct queue_family_indices indices =
+	{
+		.graphics_family_set = 0,
+		.graphics_family = false
+	};
+
+	uint32_t family_count = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, NULL);
+
+	VkQueueFamilyProperties *families = malloc(sizeof *families * family_count);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &family_count, families);
+
+	for (unsigned int i = 0; i < family_count; i++){
+		if(families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT){
+			indices.graphics_family = i;
+			indices.graphics_family_set = true;
+			return indices;
+		}
+	}
+
+	return indices;
 }
