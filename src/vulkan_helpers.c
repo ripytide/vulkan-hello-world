@@ -193,6 +193,15 @@ void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debu
 	}
 }
 
+VkSurfaceKHR create_surface(VkInstance instance, GLFWwindow* window){
+	VkSurfaceKHR surface;
+
+	if (glfwCreateWindowSurface(instance, window, NULL, &surface) != VK_SUCCESS)
+		printf("Error: failed to create window surface");
+
+	return surface;
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 
 	static int count = 0;
