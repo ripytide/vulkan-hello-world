@@ -317,8 +317,6 @@ VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR su
 			queue_create_infos[unique_family_count].queueFamilyIndex = family_array[i];
 			queue_create_infos[unique_family_count].queueCount = 1;
 			queue_create_infos[unique_family_count].pQueuePriorities = &queue_priority;
-			queue_create_infos[unique_family_count].pNext = NULL;
-			queue_create_infos[unique_family_count].flags = 0;
 
 			unique_family_count++;
 		}

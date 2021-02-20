@@ -33,17 +33,21 @@ int main() {
 	VkDebugUtilsMessengerEXT debug_messenger;
 	VkPhysicalDevice physical_device;
 	VkDevice device;
-	VkQueue graphics_queue;
 	VkSurfaceKHR surface;
-
+	struct queue_family_indices indices;
+	VkQueue graphics_queue;
+	VkQueue presentation_queue;
 	//define them
 	window = InitialiseGLFW();
 	instance = create_vk_instance();
 	setup_debug_messenger(instance, &debug_messenger);
 	surface = create_surface(instance, window);
-	physical_device = pick_physical_device(instance);
-	device = create_logical_device(physical_device);
-	vkGetDeviceQueue(device, find_queue_families(physical_device).graphics_family, 0, &graphics_queue);
+	physical_device = pick_physical_device(instance, surface);
+	device = create_logical_device(physical_device, surface);
+	indices = find_queue_families(physical_device, surface);
+	vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
+	vkGetDeviceQueue(device, indices.presentation_family, 0, &presentation_queue);
+
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
 	mainLoop(window);
