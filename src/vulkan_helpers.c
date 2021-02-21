@@ -378,24 +378,24 @@ VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR su
 	return device;
 }
 
-struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface){
+struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice physical_device, VkSurfaceKHR surface){
 	struct swap_chain_support_details details;
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, surface, &details.capabilities);
 
 	uint32_t format_count = 0;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, NULL);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, NULL);
 	if (format_count){
 		details.formats = malloc(sizeof *details.formats * format_count);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, details.formats);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface, &format_count, details.formats);
 		details.format_count = format_count;
 	}
 
 	uint32_t present_mode_count = 0;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, NULL);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_mode_count, NULL);
 	if (present_mode_count){
 		details.present_modes = malloc(sizeof *details.present_modes * present_mode_count);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, details.present_modes);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface, &present_mode_count, details.present_modes);
 		details.present_modes_count = present_mode_count;
 	}
 
@@ -413,14 +413,14 @@ VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_form
 }
 
 VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count){
-	//FIFO is the only mode guaranteed to be available
-	//TODO implement mode selection for v-sync triple sync etc
-	return VK_PRESENT_MODE_FIFO_KHR;
+		//FIFO is the only mode guaranteed to be available
+		//TODO implement mode selection for v-sync triple sync etc
+		return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR * capabilities){
-	if (capabilities->currentExtent.width != UINT32_MAX){
-		return capabilities->currentExtent;
+VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR capabilities){
+	if (capabilities.currentExtent.width != UINT32_MAX){
+		return capabilities.currentExtent;
 	} else {
 		int width, height;
 		glfwGetFramebufferSize(window, &width, &height);
@@ -431,9 +431,74 @@ VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR * cap
 		};
 		
 		//clamp the width/height to the min max range given in the capabilities
-		actual_extent.width = MAX(capabilities->minImageExtent.width, MIN(capabilities->maxImageExtent.width, actual_extent.width));
-		actual_extent.height = MAX(capabilities->minImageExtent.height, MIN(capabilities->maxImageExtent.height, actual_extent.height));
+		actual_extent.width = MAX(capabilities.minImageExtent.width, MIN(capabilities.maxImageExtent.width, actual_extent.width));
+		actual_extent.height = MAX(capabilities.minImageExtent.height, MIN(capabilities.maxImageExtent.height, actual_extent.height));
 
 		return actual_extent;
 	}
+}
+
+struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device) {
+	struct swap_chain_support_details details = query_swap_chain_support(physical_device, surface);
+
+	VkSurfaceFormatKHR surface_format = choose_swap_surface_format(details.formats, details.format_count);
+	VkPresentModeKHR present_mode = choose_swap_present_mode(details.present_modes, details.present_modes_count);
+	VkExtent2D extent = choose_swap_extent(window, details.capabilities);
+
+	uint32_t image_count = details.capabilities.minImageCount + 1;
+
+	if (details.capabilities.maxImageCount > 0 && image_count > details.capabilities.maxImageCount){
+		image_count = details.capabilities.maxImageCount;
+	}
+
+	VkSwapchainCreateInfoKHR create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	create_info.surface = surface;
+
+	create_info.minImageCount = image_count;
+	create_info.imageFormat = surface_format.format;
+	create_info.imageColorSpace = surface_format.colorSpace;
+	create_info.imageExtent = extent;
+	create_info.imageArrayLayers = 1;
+	create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	struct queue_family_indices indices = find_queue_families(physical_device, surface);
+	uint32_t queue_family_indices[] = {indices.graphics_family, indices.presentation_family};
+
+	if (indices.graphics_family != indices.presentation_family){
+		create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		create_info.queueFamilyIndexCount = 2;
+		create_info.pQueueFamilyIndices = queue_family_indices;
+	} else {
+		create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		create_info.queueFamilyIndexCount = 0; //optional
+		create_info.pQueueFamilyIndices = NULL; //optional
+	}
+
+	// if we want to apply stuff like 90 rotations we can do so here (if supported)
+	create_info.preTransform = details.capabilities.currentTransform;
+	create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	create_info.presentMode = present_mode;
+	//if some pixels are obscurred then we dont care about them which is better for performance
+	create_info.clipped = VK_TRUE;
+	create_info.oldSwapchain = VK_NULL_HANDLE;
+
+	VkSwapchainKHR swap_chain;
+
+	if (vkCreateSwapchainKHR(device, &create_info, NULL, &swap_chain) != VK_SUCCESS){
+		printf("Error: Unable to create swap chain");
+	}
+
+	VkImage *images = malloc(sizeof *images * image_count);
+
+	struct swap_chain_info info = {
+		.swap_chain = swap_chain,
+		.images = images,
+		.image_count = image_count,
+		.format = surface_format.format,
+		.extent = extent
+	};
+
+	return info;
 }

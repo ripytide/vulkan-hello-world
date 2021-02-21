@@ -20,7 +20,8 @@ VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR su
 struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface);
 VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats, int format_count);
 VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count);
-VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR *capabilities);
+VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR capabilities);
+struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device);
 
 //a struct for getting the queue family indicies for certain family types
 struct queue_family_indices {
@@ -45,6 +46,14 @@ struct swap_chain_support_details{
 	int format_count;
 	VkPresentModeKHR *present_modes;
 	int present_modes_count;
+};
+
+struct swap_chain_info{
+	VkSwapchainKHR swap_chain;
+	VkImage *images;
+	int image_count;
+	VkFormat format;
+	VkExtent2D extent;
 };
 
 //handy macro for gettin the size of an array in bytes at runtime, this cool
