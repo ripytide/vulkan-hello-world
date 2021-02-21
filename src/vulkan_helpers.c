@@ -11,18 +11,12 @@
 #include "vulkan_helpers.h"
 
 //the layers/extensions wanted on top of the GLFW required extensions
-const char* validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
-const char* other_extensions[] = { VK_EXT_DEBUG_UTILS_EXTENSION_NAME };
+const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
+const char *other_extensions[] = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
+const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 //handy macro for gettin the size of an array in bytes at runtime, this cool
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
-
-//a struct made to allow the get_required_extensions function to give both a list of extensions and
-//the number of extensions seeing as it may change at runtime and sizeof is done at compile time i think
-struct extension_info {
-	const char** extensions;
-	uint32_t extension_count;
-};
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -248,7 +242,30 @@ bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface){
 
 	struct queue_family_indices indices = find_queue_families(device, surface);
 
-	return device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && device_features.geometryShader && indices.graphics_family_set;
+	bool device_extension_support = check_device_extension_support(device);
+
+	return device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && device_features.geometryShader && indices.graphics_family_set && indices.presentation_family_set && device_extension_support;
+}
+
+bool check_device_extension_support(VkPhysicalDevice device){
+	uint32_t extension_count = 0;
+	vkEnumerateDeviceExtensionProperties(device, NULL, &extension_count, NULL);
+
+	VkExtensionProperties *extensions = malloc(sizeof *extensions * extension_count);
+	vkEnumerateDeviceExtensionProperties(device, NULL, &extension_count, extensions);
+
+	bool found;
+	for (unsigned int i = 0; i < ARR_SIZE(device_extensions); i++) {
+		found = false;
+		for (unsigned int j = 0; j < extension_count; j++) {
+			if (strcmp(device_extensions[i], extensions[j].extensionName) == 0)
+				found = true;
+		}
+		if (!found) {
+			return false;
+		}
+	}
+	return true;
 }
 
 struct queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface){
