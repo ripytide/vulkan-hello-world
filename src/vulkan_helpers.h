@@ -18,6 +18,9 @@ bool check_device_extension_support(VkPhysicalDevice device);
 struct queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface);
 VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
 struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface);
+VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats, int format_count);
+VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count);
+VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR *capabilities);
 
 //a struct for getting the queue family indicies for certain family types
 struct queue_family_indices {
@@ -43,3 +46,12 @@ struct swap_chain_support_details{
 	VkPresentModeKHR *present_modes;
 	int present_modes_count;
 };
+
+//handy macro for gettin the size of an array in bytes at runtime, this cool
+#define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
+
+//WARNING: this has double evaluation so only pass in expressions that don't have side effects as they will happen twice
+#define MIN(x, y) ((x < y) ? x : y)
+
+//WARNING: this has double evaluation so only pass in expressions that don't have side effects as they will happen twice
+#define MAX(x, y) ((x > y) ? x : y)

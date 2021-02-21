@@ -1,5 +1,6 @@
 //plain old C headers
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -14,9 +15,6 @@
 const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
 const char *other_extensions[] = {VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
 const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-//handy macro for gettin the size of an array in bytes at runtime, this cool
-#define ARR_SIZE(x) sizeof(x) / sizeof(x[0])
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -402,4 +400,40 @@ struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice devi
 	}
 
 	return details;
+}
+
+VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats, int format_count){
+	//try and find a srgb formal
+	for (int i = 0; i < format_count; i++){
+		if (available_formats[i].format == VK_FORMAT_B8G8R8_SRGB && available_formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			return available_formats[i];
+	}
+	//if our specific format is not found it is usally alright to just use any format
+	return available_formats[0];
+}
+
+VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count){
+	//FIFO is the only mode guaranteed to be available
+	//TODO implement mode selection for v-sync triple sync etc
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR * capabilities){
+	if (capabilities->currentExtent.width != UINT32_MAX){
+		return capabilities->currentExtent;
+	} else {
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+
+		VkExtent2D actual_extent = {
+			.width = (uint32_t)width,
+			.height = (uint32_t)height
+		};
+		
+		//clamp the width/height to the min max range given in the capabilities
+		actual_extent.width = MAX(capabilities->minImageExtent.width, MIN(capabilities->maxImageExtent.width, actual_extent.width));
+		actual_extent.height = MAX(capabilities->minImageExtent.height, MIN(capabilities->maxImageExtent.height, actual_extent.height));
+
+		return actual_extent;
+	}
 }
