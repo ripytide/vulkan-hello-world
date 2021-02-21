@@ -17,6 +17,7 @@ bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface);
 bool check_device_extension_support(VkPhysicalDevice device);
 struct queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface);
 VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 //a struct for getting the queue family indicies for certain family types
 struct queue_family_indices {
@@ -32,4 +33,13 @@ struct queue_family_indices {
 struct extension_info {
 	const char** extensions;
 	uint32_t extension_count;
+};
+
+//a struct for swap chain details supported needed to create a swap chain
+struct swap_chain_support_details{
+	VkSurfaceCapabilitiesKHR capabilities;
+	VkSurfaceFormatKHR *formats;
+	int format_count;
+	VkPresentModeKHR *present_modes;
+	int present_modes_count;
 };

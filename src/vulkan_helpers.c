@@ -241,10 +241,23 @@ bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface){
    vkGetPhysicalDeviceFeatures(device, &device_features);
 
 	struct queue_family_indices indices = find_queue_families(device, surface);
+	struct swap_chain_support_details details = query_swap_chain_support(device, surface);
 
+
+	bool queue_adequate = indices.graphics_family_set && indices.presentation_family_set;
 	bool device_extension_support = check_device_extension_support(device);
 
-	return device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && device_features.geometryShader && indices.graphics_family_set && indices.presentation_family_set && device_extension_support;
+	bool swap_chain_adaquate = false;
+	if (device_extension_support){
+		swap_chain_adaquate = details.format_count && details.present_modes_count;
+	}
+
+	bool features_adaquate = device_features.geometryShader;
+	bool type_adaquate = device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+
+	bool device_adaquate = queue_adequate && swap_chain_adaquate && device_extension_support && features_adaquate && type_adaquate;
+
+	return device_adaquate;
 }
 
 bool check_device_extension_support(VkPhysicalDevice device){
@@ -348,7 +361,8 @@ VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR su
 		.pQueueCreateInfos = queue_create_infos,
 		.queueCreateInfoCount = unique_family_count,
 		.pEnabledFeatures = &device_features,
-		.enabledExtensionCount = 0
+		.enabledExtensionCount = ARR_SIZE(device_extensions),
+		.ppEnabledExtensionNames = device_extensions
 	};
 
 	if (enableValidationLayers) {
@@ -364,4 +378,28 @@ VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR su
 		printf("Error: Failed to create logical device");
 
 	return device;
+}
+
+struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface){
+	struct swap_chain_support_details details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+
+	uint32_t format_count = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, NULL);
+	if (format_count){
+		details.formats = malloc(sizeof *details.formats * format_count);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, details.formats);
+		details.format_count = format_count;
+	}
+
+	uint32_t present_mode_count = 0;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, NULL);
+	if (present_mode_count){
+		details.present_modes = malloc(sizeof *details.present_modes * present_mode_count);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, details.present_modes);
+		details.present_modes_count = present_mode_count;
+	}
+
+	return details;
 }
