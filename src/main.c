@@ -28,6 +28,7 @@ const uint32_t height = 10;
 	
 int main() {
 	//declare important variables used frequently
+	//for vulkan setup and config
 	GLFWwindow* window;
 	VkInstance instance;
 	VkDebugUtilsMessengerEXT debug_messenger;
@@ -71,10 +72,19 @@ int main() {
 
 	image_views = create_image_views(images, image_count, format, device);
 
+	//the graphics pipeline setup
+	//definitions
+	
+	//declarations
+
+
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
+	//the mainloop
 	mainLoop(window);
 	
+
+	//the clean up after main loop ends
 	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count);
 
 	return 0;
