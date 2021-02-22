@@ -445,17 +445,17 @@ struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSur
 	VkPresentModeKHR present_mode = choose_swap_present_mode(details.present_modes, details.present_modes_count);
 	VkExtent2D extent = choose_swap_extent(window, details.capabilities);
 
-	uint32_t image_count = details.capabilities.minImageCount + 1;
+	uint32_t min_image_count = details.capabilities.minImageCount + 1;
 
-	if (details.capabilities.maxImageCount > 0 && image_count > details.capabilities.maxImageCount){
-		image_count = details.capabilities.maxImageCount;
+	if (details.capabilities.maxImageCount > 0 && min_image_count > details.capabilities.maxImageCount){
+		min_image_count = details.capabilities.maxImageCount;
 	}
 
 	VkSwapchainCreateInfoKHR create_info = {0};
 	create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	create_info.surface = surface;
 
-	create_info.minImageCount = image_count;
+	create_info.minImageCount = min_image_count;
 	create_info.imageFormat = surface_format.format;
 	create_info.imageColorSpace = surface_format.colorSpace;
 	create_info.imageExtent = extent;
@@ -490,7 +490,10 @@ struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSur
 		printf("Error: Unable to create swap chain");
 	}
 
+	uint32_t image_count = 0;
+	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, NULL);
 	VkImage *images = malloc(sizeof *images * image_count);
+	vkGetSwapchainImagesKHR(device, swap_chain, &image_count, images);
 
 	struct swap_chain_info info = {
 		.swap_chain = swap_chain,
@@ -501,4 +504,31 @@ struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSur
 	};
 
 	return info;
+}
+
+VkImageView *create_image_views(VkImage *images, int image_count, VkFormat format, VkDevice device){
+	VkImageView *image_views = malloc(sizeof *image_views * image_count);
+
+	for (int i = 0; i < image_count; i++){
+		VkImageViewCreateInfo create_info = {0};
+		create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		create_info.image = images[i];
+		create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		create_info.format = format;
+		create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		create_info.subresourceRange.baseMipLevel = 0;
+		create_info.subresourceRange.levelCount = 1;
+		create_info.subresourceRange.baseArrayLayer = 0;
+		create_info.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(device, &create_info, NULL, &image_views[i]) != VK_SUCCESS){
+			printf("Error: failed to create image view: %d\n", i);
+		}
+	}
+
+	return image_views;
 }

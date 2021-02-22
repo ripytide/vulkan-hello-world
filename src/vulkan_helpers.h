@@ -22,6 +22,7 @@ VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_form
 VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count);
 VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR capabilities);
 struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device);
+VkImageView *create_image_views(VkImage *images, int image_count, VkFormat format, VkDevice device);
 
 //a struct for getting the queue family indicies for certain family types
 struct queue_family_indices {

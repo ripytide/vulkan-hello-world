@@ -13,7 +13,7 @@
 //function declarations
 GLFWwindow* InitialiseGLFW();
 void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_mesenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain);
+void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_mesenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -36,6 +36,8 @@ int main() {
 	VkDevice device;
 	VkSwapchainKHR swap_chain;
 	VkImage *images;
+	int image_count;
+	VkImageView *image_views;
 	VkFormat format;
 	VkExtent2D extent;
 
@@ -56,23 +58,24 @@ int main() {
 
 	device = create_logical_device(physical_device, surface);
 
-	struct swap_chain_info swap_chain_info = create_swap_chain(physical_device, surface, window, device);
-	swap_chain = swap_chain_info.swap_chain;
-	images = swap_chain_info.images;
-	format = swap_chain_info.format;
-	extent = swap_chain_info.extent;
-
 	indices = find_queue_families(physical_device, surface);
-
 	vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
 	vkGetDeviceQueue(device, indices.presentation_family, 0, &presentation_queue);
 
+	struct swap_chain_info swap_chain_info = create_swap_chain(physical_device, surface, window, device);
+	swap_chain = swap_chain_info.swap_chain;
+	images = swap_chain_info.images;
+	image_count = swap_chain_info.image_count;
+	format = swap_chain_info.format;
+	extent = swap_chain_info.extent;
+
+	image_views = create_image_views(images, image_count, format, device);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
 	mainLoop(window);
 	
-	CleanUp(window, instance, device, debug_messenger, surface, swap_chain);
+	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count);
 
 	return 0;
 }
@@ -91,8 +94,12 @@ void mainLoop(GLFWwindow* window) {
 	}
 }
 
-void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain) {
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count) {
 	//order here is extremly important
+	for (int i = 0; i < image_count; i++){
+		vkDestroyImageView(device, image_views[i], NULL);
+	}
+
 	vkDestroySwapchainKHR(device, swap_chain, NULL);
 
 	vkDestroyDevice(device, NULL);
