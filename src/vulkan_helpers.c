@@ -9,7 +9,9 @@
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
 #include "vulkan_helpers.h"
+#include "basic_helpers.h"
 
 //the layers/extensions wanted on top of the GLFW required extensions
 const char *validation_layers[] = {"VK_LAYER_KHRONOS_validation"};
@@ -531,4 +533,54 @@ VkImageView *create_image_views(VkImage *images, int image_count, VkFormat forma
 	}
 
 	return image_views;
+}
+
+void create_graphics_pipeline(VkDevice device){
+	//no need to null terminate as we will be explicit about length later
+	char *vert_shader_code = read_file("shaders/shader.vert", false);
+	long vert_shader_length = get_length("shaders/shader.vert");
+	char *frag_shader_code = read_file("shaders/shader.frag", false);
+	long vert_shader_length = get_length("shaders/shader.frag");
+
+	VkShaderModule vert_shader_module = create_shader_module(vert_shader_code, vert_shader_length, device);
+	VkShaderModule frag_shader_module = create_shader_module(frag_shader_code, frag_shader_length, device);
+
+	VkPipelineShaderStageCreateInfo vert_shader_stage_info = {0};
+	vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	vert_shader_stage_info.module = vert_shader_module;
+	vert_shader_stage_info.pNext = "main";
+	//use for eificient constant definition at pipeline creation time
+	vert_shader_stage_info.pSpecializationInfo = NULL;
+
+	VkPipelineShaderStageCreateInfo frag_shader_stage_info = {0};
+	frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	frag_shader_stage_info.module = frag_shader_module;
+	frag_shader_stage_info.pNext = "main";
+	//use for eificient constant definition at pipeline creation time
+	frag_shader_stage_info.pSpecializationInfo = NULL;
+
+	VkPipelineShaderStageCreateInfo shader_stages_create_info[] = {vert_shader_stage_info, frag_shader_stage_info};
+
+	vkDestroyShaderModule(device, vert_shader_module, NULL);
+	vkDestroyShaderModule(device, frag_shader_module, NULL);
+
+	return;
+}
+
+VkShaderModule create_shader_module(char *code, long code_size, VkDevice device){
+	VkShaderModuleCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	create_info.codeSize = code_size;
+	create_info.pCode = code;
+
+	VkShaderModule shader_module;
+	if (vkCreateShaderModule(device, &create_info, NULL, &shader_module) != VK_SUCCESS){
+		printf("Error: failed to create shader module");
+	}
+
+	free(code);
+
+	return shader_module;
 }
