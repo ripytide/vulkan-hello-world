@@ -540,7 +540,7 @@ void create_graphics_pipeline(VkDevice device){
 	char *vert_shader_code = read_file("shaders/shader.vert", false);
 	long vert_shader_length = get_length("shaders/shader.vert");
 	char *frag_shader_code = read_file("shaders/shader.frag", false);
-	long vert_shader_length = get_length("shaders/shader.frag");
+	long frag_shader_length = get_length("shaders/shader.frag");
 
 	VkShaderModule vert_shader_module = create_shader_module(vert_shader_code, vert_shader_length, device);
 	VkShaderModule frag_shader_module = create_shader_module(frag_shader_code, frag_shader_length, device);
@@ -583,4 +583,107 @@ VkShaderModule create_shader_module(char *code, long code_size, VkDevice device)
 	free(code);
 
 	return shader_module;
+}
+
+VkPipelineVertexInputStateCreateInfo get_vertex_input_create_info(){
+	VkPipelineVertexInputStateCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	create_info.vertexBindingDescriptionCount = 0;
+	create_info.pVertexBindingDescriptions = NULL;
+	create_info.vertexAttributeDescriptionCount = 0;
+	create_info.pVertexAttributeDescriptions = NULL;
+
+	return create_info;
+}
+
+VkPipelineInputAssemblyStateCreateInfo get_input_assembly_create_info(VkExtent2D extent){
+	VkPipelineInputAssemblyStateCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	create_info.primitiveRestartEnable = VK_FALSE;
+
+	return create_info;
+}
+
+VkViewport get_viewport(VkExtent2D extent){
+	VkViewport viewport = {0};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)extent.width;
+	viewport.height = (float)extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+}
+
+VkRect2D get_scissor(VkExtent2D extent){
+	VkRect2D scissor = {0};
+	scissor.offset = {0, 0};
+	scissor.extent = extent;
+}
+
+VkPipelineViewportStateCreateInfo get_viewport_state(VkExtent2D extent){
+	VkPipelineViewportStateCreateInfo viewport_state = {0};
+	viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewport_state.viewportCount = 1;
+	VkViewport viewport = get_viewport(extent);
+	viewport_state.pViewports = &viewport;
+	viewport_state.scissorCount = 1;
+	VkRect2D scissor = get_scissor(extent);
+	viewport_state.scissorCount = &scissor;
+}
+
+VkPipelineRasterizationStateCreateInfo get_rasterizer(){
+	VkPipelineRasterizationStateCreateInfo rasterizer = {0};
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.depthClampEnable = VK_FALSE;
+	//if set this is set to true it discards all geometry passing through rasterizer
+	rasterizer.rasterizerDiscardEnable = VK_FALSE;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = 1.0f;
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasConstantFactor = 0.0f;
+	rasterizer.depthBiasClamp = 0.0f;
+	rasterizer.depthBiasSlopeFactor = 0.0f;
+};
+
+VkPipelineMultisampleStateCreateInfo get_multisampling(){
+	VkPipelineMultisampleStateCreateInfo multisampling = {0};
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.sampleShadingEnable = VK_FALSE;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.minSampleShading = 1.0f;
+	multisampling.pSampleMask = NULL;
+	multisampling.alphaToCoverageEnable = VK_FALSE;
+	multisampling.alphaToOneEnable = VK_FALSE;
+}
+
+VkPipelineColorBlendAttachmentState get_blend_attachement(){
+	//per frame buffer settings
+	VkPipelineColorBlendAttachmentState blend = {0};
+	blend.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	blend.blendEnable = VK_FALSE;
+	blend.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blend.colorBlendOp = VK_BLEND_OP_ADD;
+	blend.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	blend.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
+VkPipelineColorBlendStateCreateInfo get_blend_create_info(){
+	VkPipelineColorBlendStateCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	create_info.logicOpEnable = VK_FALSE;
+	create_info.logicOp = VK_LOGIC_OP_COPY;
+	create_info.attachmentCount = 1;
+	VkPipelineColorBlendAttachmentState blend_attachment = get_blend_attachement();
+	create_info.pAttachments = &blend_attachment;
+	//there are only four constants in the blendconstants array
+	create_info.blendConstants[0] = 0.0f;
+	create_info.blendConstants[1] = 0.0f;
+	create_info.blendConstants[2] = 0.0f;
+	create_info.blendConstants[3] = 0.0f;
 }
