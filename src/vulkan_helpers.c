@@ -687,3 +687,30 @@ VkPipelineColorBlendStateCreateInfo get_blend_create_info(){
 	create_info.blendConstants[2] = 0.0f;
 	create_info.blendConstants[3] = 0.0f;
 }
+
+VkPipelineDynamicStateCreateInfo get_dynamic_state(){
+	VkDynamicState dynamic_states[] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_LINE_WIDTH
+	};
+
+	VkPipelineDynamicStateCreateInfo state = {0};
+	state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	state.dynamicStateCount = 2;
+	state.pDynamicStates = dynamic_states;
+}
+
+VkPipelineLayout get_pipeline_layout(){
+	VkPipelineLayoutCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	create_info.setLayoutCount = 0;
+	create_info.pSetLayouts = NULL;
+	create_info.pushConstantRangeCount = 0;
+	create_info.pPushConstantRanges = NULL;
+
+	VkPipelineLayout layout;
+	if (vkCreatePipelineLayout(device, &create_info, NULL, &layout) =! VK_SUCCESS){
+		printf("Error: failed to create pipeline layout");
+	}
+	return layout;
+}

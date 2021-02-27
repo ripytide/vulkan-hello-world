@@ -47,6 +47,8 @@ int main() {
 	VkQueue graphics_queue;
 	VkQueue presentation_queue;
 
+	VkPipelineLayout pipeline_layout;
+
 	//define them
 	window = InitialiseGLFW();
 
@@ -106,6 +108,7 @@ void mainLoop(GLFWwindow* window) {
 }
 
 void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count) {
+	vkDestroyPipelineLayout(device, pipeline_layout, NULL);
 	//order here is extremly important
 	for (int i = 0; i < image_count; i++){
 		vkDestroyImageView(device, image_views[i], NULL);
