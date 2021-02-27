@@ -24,8 +24,24 @@ VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR capab
 struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device);
 VkImageView *create_image_views(VkImage *images, int image_count, VkFormat format, VkDevice device);
 
+
+void create_graphics_pipeline(VkDevice device);
+VkShaderModule create_shader_module(char *code, long code_size, VkDevice device);
+VkPipelineVertexInputStateCreateInfo get_vertex_input_create_info();
+VkPipelineInputAssemblyStateCreateInfo get_input_assembly_create_info();
+VkViewport get_viewport(VkExtent2D extent);
+VkRect2D get_scissor(VkExtent2D extent);
+VkPipelineViewportStateCreateInfo get_viewport_state_create_info(VkExtent2D extent);
+VkPipelineRasterizationStateCreateInfo get_rasterizer_create_info();
+VkPipelineMultisampleStateCreateInfo get_multisampling_create_info();
+VkPipelineColorBlendAttachmentState get_blend_attachement();
+VkPipelineColorBlendStateCreateInfo get_blend_create_info();
+VkPipelineDynamicStateCreateInfo get_dynamic_state_create_info();
+VkPipelineLayout get_pipeline_layout(VkDevice device);
+
+
 //a struct for getting the queue family indicies for certain family types
-struct queue_family_indices {
+struct queue_family_indices{
 	int family_count;
 	uint32_t graphics_family;
 	bool graphics_family_set;
@@ -35,7 +51,7 @@ struct queue_family_indices {
 
 //a struct made to allow the get_required_extensions function to give both a list of extensions and
 //the number of extensions seeing as it may change at runtime and sizeof is done at compile time i think
-struct extension_info {
+struct extension_info{
 	const char** extensions;
 	uint32_t extension_count;
 };

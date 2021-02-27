@@ -573,7 +573,9 @@ VkShaderModule create_shader_module(char *code, long code_size, VkDevice device)
 	VkShaderModuleCreateInfo create_info = {0};
 	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	create_info.codeSize = code_size;
-	create_info.pCode = code;
+
+	//TODO learn the reason for this cast, may be a source of bugs
+	create_info.pCode = (uint32_t*) code;
 
 	VkShaderModule shader_module;
 	if (vkCreateShaderModule(device, &create_info, NULL, &shader_module) != VK_SUCCESS){
@@ -596,7 +598,7 @@ VkPipelineVertexInputStateCreateInfo get_vertex_input_create_info(){
 	return create_info;
 }
 
-VkPipelineInputAssemblyStateCreateInfo get_input_assembly_create_info(VkExtent2D extent){
+VkPipelineInputAssemblyStateCreateInfo get_input_assembly_create_info(){
 	VkPipelineInputAssemblyStateCreateInfo create_info = {0};
 	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	create_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -613,16 +615,21 @@ VkViewport get_viewport(VkExtent2D extent){
 	viewport.height = (float)extent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
-
+	return viewport;
 }
 
 VkRect2D get_scissor(VkExtent2D extent){
 	VkRect2D scissor = {0};
-	scissor.offset = {0, 0};
+	VkOffset2D offset = {
+		.x = 0,
+		.y = 0
+	};
+	scissor.offset = offset;
 	scissor.extent = extent;
+	return scissor;
 }
 
-VkPipelineViewportStateCreateInfo get_viewport_state(VkExtent2D extent){
+VkPipelineViewportStateCreateInfo get_viewport_state_create_info(VkExtent2D extent){
 	VkPipelineViewportStateCreateInfo viewport_state = {0};
 	viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewport_state.viewportCount = 1;
@@ -630,10 +637,12 @@ VkPipelineViewportStateCreateInfo get_viewport_state(VkExtent2D extent){
 	viewport_state.pViewports = &viewport;
 	viewport_state.scissorCount = 1;
 	VkRect2D scissor = get_scissor(extent);
-	viewport_state.scissorCount = &scissor;
+	viewport_state.pScissors = &scissor;
+
+	return viewport_state;
 }
 
-VkPipelineRasterizationStateCreateInfo get_rasterizer(){
+VkPipelineRasterizationStateCreateInfo get_rasterizer_create_info(){
 	VkPipelineRasterizationStateCreateInfo rasterizer = {0};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
@@ -647,9 +656,11 @@ VkPipelineRasterizationStateCreateInfo get_rasterizer(){
 	rasterizer.depthBiasConstantFactor = 0.0f;
 	rasterizer.depthBiasClamp = 0.0f;
 	rasterizer.depthBiasSlopeFactor = 0.0f;
+
+	return rasterizer;
 };
 
-VkPipelineMultisampleStateCreateInfo get_multisampling(){
+VkPipelineMultisampleStateCreateInfo get_multisampling_create_info(){
 	VkPipelineMultisampleStateCreateInfo multisampling = {0};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
@@ -658,6 +669,8 @@ VkPipelineMultisampleStateCreateInfo get_multisampling(){
 	multisampling.pSampleMask = NULL;
 	multisampling.alphaToCoverageEnable = VK_FALSE;
 	multisampling.alphaToOneEnable = VK_FALSE;
+
+	return multisampling;
 }
 
 VkPipelineColorBlendAttachmentState get_blend_attachement(){
@@ -671,6 +684,8 @@ VkPipelineColorBlendAttachmentState get_blend_attachement(){
 	blend.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	blend.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 	blend.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	return blend;
 }
 
 VkPipelineColorBlendStateCreateInfo get_blend_create_info(){
@@ -686,9 +701,11 @@ VkPipelineColorBlendStateCreateInfo get_blend_create_info(){
 	create_info.blendConstants[1] = 0.0f;
 	create_info.blendConstants[2] = 0.0f;
 	create_info.blendConstants[3] = 0.0f;
+
+	return create_info;
 }
 
-VkPipelineDynamicStateCreateInfo get_dynamic_state(){
+VkPipelineDynamicStateCreateInfo get_dynamic_state_create_info(){
 	VkDynamicState dynamic_states[] = {
 		VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_LINE_WIDTH
@@ -698,9 +715,11 @@ VkPipelineDynamicStateCreateInfo get_dynamic_state(){
 	state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	state.dynamicStateCount = 2;
 	state.pDynamicStates = dynamic_states;
+
+	return state;
 }
 
-VkPipelineLayout get_pipeline_layout(){
+VkPipelineLayout get_pipeline_layout(VkDevice device){
 	VkPipelineLayoutCreateInfo create_info = {0};
 	create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	create_info.setLayoutCount = 0;
@@ -709,7 +728,8 @@ VkPipelineLayout get_pipeline_layout(){
 	create_info.pPushConstantRanges = NULL;
 
 	VkPipelineLayout layout;
-	if (vkCreatePipelineLayout(device, &create_info, NULL, &layout) =! VK_SUCCESS){
+
+	if (vkCreatePipelineLayout(device, &create_info, NULL, &layout) != VK_SUCCESS){
 		printf("Error: failed to create pipeline layout");
 	}
 	return layout;

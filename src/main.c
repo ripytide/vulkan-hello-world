@@ -14,7 +14,7 @@
 //function declarations
 GLFWwindow* InitialiseGLFW();
 void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow* window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_mesenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count);
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -47,7 +47,6 @@ int main() {
 	VkQueue graphics_queue;
 	VkQueue presentation_queue;
 
-	VkPipelineLayout pipeline_layout;
 
 	//define them
 	window = InitialiseGLFW();
@@ -76,10 +75,10 @@ int main() {
 	image_views = create_image_views(images, image_count, format, device);
 
 	//the graphics pipeline setup
-	//definitions
-	
 	//declarations
-
+	VkPipelineLayout pipeline_layout;
+	//definitions
+	pipeline_layout = get_pipeline_layout(device);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
@@ -88,7 +87,7 @@ int main() {
 	
 
 	//the clean up after main loop ends
-	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count);
+	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout);
 
 	return 0;
 }
@@ -107,7 +106,7 @@ void mainLoop(GLFWwindow* window) {
 	}
 }
 
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count) {
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout) {
 	vkDestroyPipelineLayout(device, pipeline_layout, NULL);
 	//order here is extremly important
 	for (int i = 0; i < image_count; i++){
