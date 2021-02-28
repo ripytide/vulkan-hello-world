@@ -1,44 +1,51 @@
+//functions
+
+//instance functions
 VkInstance create_vk_instance();
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator);
+
+//device functions
+VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+bool check_device_extension_support(VkPhysicalDevice device);
+bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface);
+VkPhysicalDevice pick_physical_device(VkInstance instance, VkSurfaceKHR VkSurfaceKHR);
+struct queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+//extension functions
 void PrintAvailibleExtensions();
-bool CheckValidationLayerSupport();
 struct extension_info get_required_extensions();
-void populate_debug_create_info(VkDebugUtilsMessengerCreateInfoEXT* create_info);
+
+//debug functions
 void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debug_messenger);
-VkSurfaceKHR create_surface(VkInstance instance, GLFWwindow *window);
+bool CheckValidationLayerSupport();
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
 	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData);
-VkPhysicalDevice pick_physical_device(VkInstance instance, VkSurfaceKHR VkSurfaceKHR);
-bool is_device_suitable(VkPhysicalDevice device, VkSurfaceKHR surface);
-bool check_device_extension_support(VkPhysicalDevice device);
-struct queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface);
-VkDevice create_logical_device(VkPhysicalDevice physical_device, VkSurfaceKHR surface);
+void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks *pAllocator);
+
+//swap chain functions
+struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device);
+VkImageView *create_image_views(VkImage *images, int image_count, VkFormat format, VkDevice device);
+VkSurfaceKHR create_surface(VkInstance instance, GLFWwindow *window);
 struct swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface);
 VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats, int format_count);
 VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *availible_modes, int mode_count);
 VkExtent2D choose_swap_extent(GLFWwindow *window, VkSurfaceCapabilitiesKHR capabilities);
-struct swap_chain_info create_swap_chain(VkPhysicalDevice physical_device, VkSurfaceKHR surface, GLFWwindow *window, VkDevice device);
-VkImageView *create_image_views(VkImage *images, int image_count, VkFormat format, VkDevice device);
 
-
-void create_graphics_pipeline(VkDevice device);
+//graphics pipeline functions
+VkPipeline create_graphics_pipeline(VkDevice device, VkExtent2D extent, VkRenderPass render_pass, VkPipelineLayout pipeline_layout);
+VkPipelineLayout create_graphics_pipeline_layout(VkDevice device);
 VkShaderModule create_shader_module(char *code, long code_size, VkDevice device);
-VkPipelineVertexInputStateCreateInfo get_vertex_input_create_info();
-VkPipelineInputAssemblyStateCreateInfo get_input_assembly_create_info();
-VkViewport get_viewport(VkExtent2D extent);
-VkRect2D get_scissor(VkExtent2D extent);
-VkPipelineViewportStateCreateInfo get_viewport_state_create_info(VkExtent2D extent);
-VkPipelineRasterizationStateCreateInfo get_rasterizer_create_info();
-VkPipelineMultisampleStateCreateInfo get_multisampling_create_info();
-VkPipelineColorBlendAttachmentState get_blend_attachement();
-VkPipelineColorBlendStateCreateInfo get_blend_create_info();
-VkPipelineDynamicStateCreateInfo get_dynamic_state_create_info();
-VkPipelineLayout get_pipeline_layout(VkDevice device);
 
+//misc functions
+
+//render pass functions
+VkRenderPass create_render_pass(VkFormat format, VkDevice device);
+
+
+//structs
 
 //a struct for getting the queue family indicies for certain family types
 struct queue_family_indices{
@@ -65,6 +72,7 @@ struct swap_chain_support_details{
 	int present_modes_count;
 };
 
+//a struct for swap chain details to pass back from create function
 struct swap_chain_info{
 	VkSwapchainKHR swap_chain;
 	VkImage *images;
@@ -72,6 +80,9 @@ struct swap_chain_info{
 	VkFormat format;
 	VkExtent2D extent;
 };
+
+
+//macros
 
 //handy macro for gettin the size of an array in bytes at runtime, this cool
 #define ARR_SIZE(x) sizeof(x) / sizeof(x[0])

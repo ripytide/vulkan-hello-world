@@ -14,7 +14,7 @@
 //function declarations
 GLFWwindow* InitialiseGLFW();
 void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout);
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -76,9 +76,14 @@ int main() {
 
 	//the graphics pipeline setup
 	//declarations
+	VkRenderPass render_pass;
 	VkPipelineLayout pipeline_layout;
+	VkPipeline graphics_pipeline;
+
 	//definitions
-	pipeline_layout = get_pipeline_layout(device);
+	render_pass = create_render_pass(format, device);
+	pipeline_layout = create_graphics_pipeline_layout(device);
+	graphics_pipeline = create_graphics_pipeline(device, extent, render_pass, pipeline_layout);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
@@ -87,7 +92,7 @@ int main() {
 	
 
 	//the clean up after main loop ends
-	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout);
+	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout, render_pass, graphics_pipeline);
 
 	return 0;
 }
@@ -106,8 +111,10 @@ void mainLoop(GLFWwindow* window) {
 	}
 }
 
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout) {
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline) {
+	vkDestroyPipeline(device, graphics_pipeline, NULL);
 	vkDestroyPipelineLayout(device, pipeline_layout, NULL);
+	vkDestroyRenderPass(device, render_pass, NULL);
 	//order here is extremly important
 	for (int i = 0; i < image_count; i++){
 		vkDestroyImageView(device, image_views[i], NULL);
@@ -117,11 +124,11 @@ void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUt
 
 	vkDestroyDevice(device, NULL);
 
-	vkDestroySurfaceKHR(instance, surface, NULL);
-
 	if (enableValidationLayers) {
 		DestroyDebugUtilsMessengerEXT(instance, debug_messenger, NULL);
 	}
+
+	vkDestroySurfaceKHR(instance, surface, NULL);
 
 	vkDestroyInstance(instance, NULL);
 
