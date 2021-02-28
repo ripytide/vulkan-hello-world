@@ -593,10 +593,10 @@ VkPipelineLayout create_graphics_pipeline_layout(VkDevice device){
 
 VkPipeline create_graphics_pipeline(VkDevice device, VkExtent2D extent, VkRenderPass render_pass, VkPipelineLayout pipeline_layout){
 	//no need to null terminate as we will be explicit about length later
-	char *vert_shader_code = read_file("shaders/shader.vert", false);
-	long vert_shader_length = get_length("shaders/shader.vert");
-	char *frag_shader_code = read_file("shaders/shader.frag", false);
-	long frag_shader_length = get_length("shaders/shader.frag");
+	char *vert_shader_code = read_file("shaders/vert.spv", false);
+	long vert_shader_length = get_length("shaders/vert.spv");
+	char *frag_shader_code = read_file("shaders/frag.spv", false);
+	long frag_shader_length = get_length("shaders/frag.spv");
 
 	VkShaderModule vert_shader_module = create_shader_module(vert_shader_code, vert_shader_length, device);
 	VkShaderModule frag_shader_module = create_shader_module(frag_shader_code, frag_shader_length, device);
@@ -605,7 +605,7 @@ VkPipeline create_graphics_pipeline(VkDevice device, VkExtent2D extent, VkRender
 	vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	vert_shader_stage_info.module = vert_shader_module;
-	vert_shader_stage_info.pNext = "main";
+	vert_shader_stage_info.pName = "main";
 	//use for eificient constant definition at pipeline creation time
 	vert_shader_stage_info.pSpecializationInfo = NULL;
 
@@ -613,7 +613,7 @@ VkPipeline create_graphics_pipeline(VkDevice device, VkExtent2D extent, VkRender
 	frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	frag_shader_stage_info.module = frag_shader_module;
-	frag_shader_stage_info.pNext = "main";
+	frag_shader_stage_info.pName = "main";
 	//use for eificient constant definition at pipeline creation time
 	frag_shader_stage_info.pSpecializationInfo = NULL;
 
