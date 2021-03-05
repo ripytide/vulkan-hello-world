@@ -16,6 +16,7 @@ struct extension_info get_required_extensions();
 
 //debug functions
 void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debug_messenger);
+void populate_debug_create_info(VkDebugUtilsMessengerCreateInfoEXT *create_info);
 bool CheckValidationLayerSupport();
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pDebugMessenger);
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(

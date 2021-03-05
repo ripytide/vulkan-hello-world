@@ -48,19 +48,12 @@ VkInstance create_vk_instance() {
 		.ppEnabledExtensionNames = ext.extensions,
 	};
 
+	
+	VkDebugUtilsMessengerCreateInfoEXT messenger_info = {0};
 	if (enableValidationLayers) {
 		createInfo.enabledLayerCount = ARR_SIZE(validation_layers);
 		createInfo.ppEnabledLayerNames = validation_layers;
-
-
-		VkDebugUtilsMessengerCreateInfoEXT messenger_info = { 0 };
-		messenger_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-		messenger_info.pNext = NULL;
-		messenger_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-		messenger_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		messenger_info.pfnUserCallback = debug_callback;
-		messenger_info.pUserData = NULL; // Optional
-		
+		populate_debug_create_info(&messenger_info);
 
 		createInfo.pNext = &messenger_info;
 	}
@@ -84,21 +77,15 @@ void populate_debug_create_info(VkDebugUtilsMessengerCreateInfoEXT* create_info)
 	create_info->pUserData = NULL; // Optional
 }
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
-	PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-	if (func) {
-		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-	}
-	else {
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
-	}
-}
+
+
 void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
 	PFN_vkDestroyDebugUtilsMessengerEXT func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func) {
 		func(instance, debugMessenger, pAllocator);
 	}
 }
+
 void PrintAvailibleExtensions() {
 	uint32_t extensionCount = 0;
 	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, NULL);
@@ -109,6 +96,7 @@ void PrintAvailibleExtensions() {
 		free(extensions);
 		return;
 	}
+
 	vkEnumerateInstanceExtensionProperties(NULL, &extensionCount, extensions);
 	
 	printf("You have %d installed Vulkan Extensions\n", extensionCount);
@@ -120,6 +108,7 @@ void PrintAvailibleExtensions() {
 
 	free(extensions);
 }
+
 bool CheckValidationLayerSupport() {
 	//this functions takes the layers defined at the top of this file and checks them agaist the availible layers on the system
 	//if any one layer defined at the top is not found of the system then false is returned; true returned if all layers found
@@ -152,6 +141,7 @@ bool CheckValidationLayerSupport() {
 	free(AvailibleLayers);
 	return true;
 }
+
 struct extension_info get_required_extensions() {
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -199,6 +189,16 @@ void setup_debug_messenger(VkInstance instance, VkDebugUtilsMessengerEXT* p_debu
 	
 	if (CreateDebugUtilsMessengerEXT(instance, &create_info, NULL, p_debug_messenger) != VK_SUCCESS) {
 		printf("Error: failed to set up debug messenger!");
+	}
+}
+
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	PFN_vkCreateDebugUtilsMessengerEXT func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	if (func) {
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else {
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
 	}
 }
 

@@ -16,7 +16,8 @@
 				"-Wall",
 				"-Wextra",
 				"-o",
-				"program.exe"
+				"program.exe",
+				"-O2"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
