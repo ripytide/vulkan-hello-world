@@ -40,6 +40,9 @@ VkPipeline create_graphics_pipeline(VkDevice device, VkExtent2D extent, VkRender
 VkPipelineLayout create_graphics_pipeline_layout(VkDevice device);
 VkShaderModule create_shader_module(char *code, long code_size, VkDevice device);
 
+//framebuffers
+VkFramebuffer *create_swap_chain_framebuffers(VkDevice device, int image_count, VkRenderPass render_pass, VkImageView *swap_chain_image_views, VkExtent2D extent);
+
 //misc functions
 
 //render pass functions

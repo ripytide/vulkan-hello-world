@@ -728,3 +728,27 @@ VkShaderModule create_shader_module(char *code, long code_size, VkDevice device)
 
 	return shader_module;
 }
+
+VkFramebuffer *create_swap_chain_framebuffers(VkDevice device, int image_count, VkRenderPass render_pass, VkImageView *swap_chain_image_views, VkExtent2D extent){
+	VkFramebuffer *framebuffers = malloc(sizeof *framebuffers * image_count);
+
+	for (int i = 0; i < image_count; i++){
+
+		VkImageView attachments[] = {swap_chain_image_views[i]};
+
+		VkFramebufferCreateInfo framebuffer_create_info = {0};
+		framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_create_info.renderPass = render_pass;
+		framebuffer_create_info.attachmentCount = 1;
+		framebuffer_create_info.pAttachments = attachments;
+		framebuffer_create_info.width = extent.width;
+		framebuffer_create_info.height = extent.height;
+		framebuffer_create_info.layers = 1;
+
+		if (vkCreateFramebuffer(device, &framebuffer_create_info, NULL, &framebuffers[i])){
+			printf("Error: failed to create framebuffer: %d", i);
+		}
+	}
+
+	return framebuffers;
+}
