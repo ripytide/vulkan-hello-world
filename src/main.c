@@ -14,7 +14,7 @@
 //function declarations
 GLFWwindow* InitialiseGLFW();
 void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers);
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -43,7 +43,7 @@ int main() {
 	VkFormat format;
 	VkExtent2D extent;
 
-	struct queue_family_indices indices;
+	struct queue_family_indices queue_family_indicies;
 	VkQueue graphics_queue;
 	VkQueue presentation_queue;
 
@@ -61,9 +61,9 @@ int main() {
 
 	device = create_logical_device(physical_device, surface);
 
-	indices = find_queue_families(physical_device, surface);
-	vkGetDeviceQueue(device, indices.graphics_family, 0, &graphics_queue);
-	vkGetDeviceQueue(device, indices.presentation_family, 0, &presentation_queue);
+	queue_family_indicies = find_queue_families(physical_device, surface);
+	vkGetDeviceQueue(device, queue_family_indicies.graphics_family, 0, &graphics_queue);
+	vkGetDeviceQueue(device, queue_family_indicies.presentation_family, 0, &presentation_queue);
 
 	struct swap_chain_info swap_chain_info = create_swap_chain(physical_device, surface, window, device);
 	swap_chain = swap_chain_info.swap_chain;
@@ -87,6 +87,13 @@ int main() {
 	graphics_pipeline = create_graphics_pipeline(device, extent, render_pass, pipeline_layout);
 	framebuffers = create_swap_chain_framebuffers(device, image_count, render_pass, image_views, extent);
 
+	//command stuff
+	//declarations
+	VkCommandPool command_pool;
+
+	//definitions
+	command_pool = create_command_pool(device, queue_family_indicies.graphics_family);
+
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
 	//the mainloop
@@ -94,7 +101,7 @@ int main() {
 	
 
 	//the clean up after main loop ends
-	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout, render_pass, graphics_pipeline, framebuffers);
+	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout, render_pass, graphics_pipeline, framebuffers, command_pool);
 
 	return 0;
 }
@@ -113,7 +120,10 @@ void mainLoop(GLFWwindow* window) {
 	}
 }
 
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers) {
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool) {
+
+	vkDestroyCommandPool(device, command_pool, NULL);
+
 	for (int i = 0; i < image_count; i++){
 		vkDestroyFramebuffer(device, framebuffers[i], NULL);
 	}

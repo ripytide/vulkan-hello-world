@@ -752,3 +752,16 @@ VkFramebuffer *create_swap_chain_framebuffers(VkDevice device, int image_count, 
 
 	return framebuffers;
 }
+
+VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index){
+	VkCommandPoolCreateInfo create_info = {};
+	create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	create_info.queueFamilyIndex = queue_index;
+	create_info.flags = 0;
+
+	VkCommandPool command_pool;
+	if (vkCreateCommandPool(device, &create_info, NULL, &command_pool) != VK_SUCCESS){
+		printf("Error: failed to create command pool");
+	}
+	return command_pool;
+}

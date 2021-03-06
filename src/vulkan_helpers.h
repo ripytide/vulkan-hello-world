@@ -48,6 +48,8 @@ VkFramebuffer *create_swap_chain_framebuffers(VkDevice device, int image_count, 
 //render pass functions
 VkRenderPass create_render_pass(VkFormat format, VkDevice device);
 
+//command stuff
+VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index);
 
 //structs
 
