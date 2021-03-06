@@ -766,7 +766,7 @@ VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index){
 	return command_pool;
 }
 
-VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_pool, int image_count){
+VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_pool, VkRenderPass render_pass, VkPipeline pipeline, VkFramebuffer *framebuffers, VkExtent2D extent, int image_count){
 	VkCommandBuffer *command_buffers = malloc(sizeof *command_buffers * image_count);
 
 	VkCommandBufferAllocateInfo alloc_info = {0};
@@ -777,6 +777,41 @@ VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_p
 
 	if (vkAllocateCommandBuffers(device, &alloc_info, command_buffers) != VK_SUCCESS){
 		printf("Error: failed to allocate command buffers");
+	}
+
+	for (int i = 0; i < image_count; i++){
+		VkCommandBufferBeginInfo begin_info = {0};
+		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		begin_info.flags = 0;
+		begin_info.pInheritanceInfo = NULL;
+
+		if (vkBeginCommandBuffer(command_buffers[i], &begin_info) != VK_SUCCESS){
+			printf("Error: failed to being recording command buffer: %d", i);
+		}
+
+		VkRenderPassBeginInfo render_pass_begin_info = {0};
+		render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		render_pass_begin_info.renderPass = render_pass;
+		render_pass_begin_info.framebuffer = framebuffers[i];
+		render_pass_begin_info.renderArea.offset.x = 0;
+		render_pass_begin_info.renderArea.offset.y = 0;
+		render_pass_begin_info.renderArea.extent = extent;
+
+		VkClearValue clear_color = {0.0f, 0.0f, 0.0f, 1.0f};
+		render_pass_begin_info.clearValueCount = 1;
+		render_pass_begin_info.pClearValues = &clear_color;
+
+		vkCmdBeginRenderPass(command_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+		vkCmdDraw(command_buffers[i], 3, 1, 0, 0); //holy balls this is it
+
+		vkCmdEndRenderPass(command_buffers[i]);
+
+		if (vkEndCommandBuffer(command_buffers[i]) != VK_SUCCESS){
+			printf("Error: failed to record command buffer: %d", i);
+		}
 	}
 
 	return command_buffers;

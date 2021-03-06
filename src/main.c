@@ -69,6 +69,7 @@ int main() {
 	swap_chain = swap_chain_info.swap_chain;
 	images = swap_chain_info.images;
 	image_count = swap_chain_info.image_count;
+	printf("Using %d images in the swapchain\n\n", image_count);
 	format = swap_chain_info.format;
 	extent = swap_chain_info.extent;
 
@@ -94,7 +95,7 @@ int main() {
 
 	//definitions
 	command_pool = create_command_pool(device, queue_family_indicies.graphics_family);
-	command_buffers = create_command_buffers(device, command_pool, image_count);
+	command_buffers = create_command_buffers(device, command_pool, render_pass, graphics_pipeline, framebuffers, extent, image_count);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
