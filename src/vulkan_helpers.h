@@ -50,6 +50,7 @@ VkRenderPass create_render_pass(VkFormat format, VkDevice device);
 
 //command stuff
 VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index);
+VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_pool, int image_count);
 
 //structs
 

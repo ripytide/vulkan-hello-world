@@ -90,9 +90,11 @@ int main() {
 	//command stuff
 	//declarations
 	VkCommandPool command_pool;
+	VkCommandBuffer *command_buffers;
 
 	//definitions
 	command_pool = create_command_pool(device, queue_family_indicies.graphics_family);
+	command_buffers = create_command_buffers(device, command_pool, image_count);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 

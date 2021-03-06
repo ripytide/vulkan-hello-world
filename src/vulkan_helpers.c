@@ -765,3 +765,19 @@ VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index){
 	}
 	return command_pool;
 }
+
+VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_pool, int image_count){
+	VkCommandBuffer *command_buffers = malloc(sizeof *command_buffers * image_count);
+
+	VkCommandBufferAllocateInfo alloc_info = {0};
+	alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	alloc_info.commandPool = command_pool;
+	alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	alloc_info.commandBufferCount = (uint32_t)image_count;
+
+	if (vkAllocateCommandBuffers(device, &alloc_info, command_buffers) != VK_SUCCESS){
+		printf("Error: failed to allocate command buffers");
+	}
+
+	return command_buffers;
+}
