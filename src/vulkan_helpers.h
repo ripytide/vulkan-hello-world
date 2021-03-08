@@ -1,5 +1,8 @@
 //functions
 
+//glfw stuff
+GLFWwindow *InitialiseGLFW(uint32_t width, uint32_t height);
+
 //instance functions
 VkInstance create_vk_instance();
 
@@ -43,7 +46,6 @@ VkShaderModule create_shader_module(char *code, long code_size, VkDevice device)
 //framebuffers
 VkFramebuffer *create_swap_chain_framebuffers(VkDevice device, int image_count, VkRenderPass render_pass, VkImageView *swap_chain_image_views, VkExtent2D extent);
 
-//misc functions
 
 //render pass functions
 VkRenderPass create_render_pass(VkFormat format, VkDevice device);
@@ -51,6 +53,11 @@ VkRenderPass create_render_pass(VkFormat format, VkDevice device);
 //command stuff
 VkCommandPool create_command_pool(VkDevice device, uint32_t queue_index);
 VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_pool, VkRenderPass render_pass, VkPipeline pipeline, VkFramebuffer *framebuffers, VkExtent2D extent, int image_count);
+void draw_frame(VkDevice device, VkQueue graphics_queue, VkQueue presentation_queue, VkSwapchainKHR swap_chain, VkCommandBuffer *command_buffers, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore);
+
+//semaphores
+VkSemaphore create_semaphore(VkDevice device);
+
 
 //structs
 

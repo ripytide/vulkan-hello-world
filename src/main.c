@@ -12,9 +12,8 @@
 #include "vulkan_helpers.h"
 
 //function declarations
-GLFWwindow* InitialiseGLFW();
-void mainLoop(GLFWwindow* window);
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool);
+void mainLoop(GLFWwindow* window, VkDevice device, VkQueue graphics_queue, VkQueue presentation_queue, VkSwapchainKHR swap_chain, VkCommandBuffer *command_buffers, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore);
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore);
 
 //enables validation layers depending of whether it was compiled in debug mode of not
 #ifdef NDEBUG
@@ -23,10 +22,6 @@ void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUt
 	static const bool enableValidationLayers = true;
 #endif
 
-//height and width parameters for the application window
-const uint32_t width = 10;
-const uint32_t height = 10;
-	
 int main() {
 	//declare important variables used frequently
 	//for vulkan setup and config
@@ -49,7 +44,7 @@ int main() {
 
 
 	//define them
-	window = InitialiseGLFW();
+	window = InitialiseGLFW(400, 400);
 
 	instance = create_vk_instance();
 
@@ -88,42 +83,43 @@ int main() {
 	graphics_pipeline = create_graphics_pipeline(device, extent, render_pass, pipeline_layout);
 	framebuffers = create_swap_chain_framebuffers(device, image_count, render_pass, image_views, extent);
 
-	//command stuff
+	//control stuff
 	//declarations
 	VkCommandPool command_pool;
 	VkCommandBuffer *command_buffers;
+	VkSemaphore image_availible_semaphore;
+	VkSemaphore render_finished_semaphore;
 
 	//definitions
 	command_pool = create_command_pool(device, queue_family_indicies.graphics_family);
 	command_buffers = create_command_buffers(device, command_pool, render_pass, graphics_pipeline, framebuffers, extent, image_count);
+	image_availible_semaphore = create_semaphore(device);
+	render_finished_semaphore = create_semaphore(device);
 
 	//printf("Do you have the required layers installed: %s", CheckValidationLayerSupport() ? "YES\n" : "NO\n");
 
 	//the mainloop
-	mainLoop(window);
+	mainLoop(window, device, graphics_queue, presentation_queue, swap_chain, command_buffers, image_availible_semaphore, render_finished_semaphore);
 	
 
 	//the clean up after main loop ends
-	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout, render_pass, graphics_pipeline, framebuffers, command_pool);
+	CleanUp(window, instance, device, debug_messenger, surface, swap_chain, image_views, image_count, pipeline_layout, render_pass, graphics_pipeline, framebuffers, command_pool, image_availible_semaphore, render_finished_semaphore);
 
 	return 0;
 }
 
-GLFWwindow* InitialiseGLFW() {
-	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	return(glfwCreateWindow(width, height, "Vulkan", NULL, NULL));
-}
-
-void mainLoop(GLFWwindow* window) {
+void mainLoop(GLFWwindow* window, VkDevice device, VkQueue graphics_queue, VkQueue presentation_queue, VkSwapchainKHR swap_chain, VkCommandBuffer *command_buffers, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore) {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+		draw_frame(device, graphics_queue, presentation_queue, swap_chain, command_buffers, image_availible_semaphore, render_finished_semaphore);
 	}
 }
 
-void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool) {
+void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore) {
+
+	vkDestroySemaphore(device, image_availible_semaphore, NULL);
+	vkDestroySemaphore(device, render_finished_semaphore, NULL);
 
 	vkDestroyCommandPool(device, command_pool, NULL);
 

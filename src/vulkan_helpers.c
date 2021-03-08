@@ -25,6 +25,14 @@ const char *device_extensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 	static const bool enableValidationLayers = true;
 #endif
 
+GLFWwindow* InitialiseGLFW(uint32_t width, uint32_t height) {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	return(glfwCreateWindow(width, height, "Vulkan", NULL, NULL));
+}
+
 VkInstance create_vk_instance() {
 	if (enableValidationLayers && !CheckValidationLayerSupport()) {
 		printf("Error: Validation layers requested but not found!");
@@ -545,6 +553,15 @@ VkImageView *create_image_views(VkImage *images, int image_count, VkFormat forma
 }
 
 VkRenderPass create_render_pass(VkFormat format, VkDevice device){
+	VkSubpassDependency dependency = {0};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+
 	VkAttachmentDescription color_attachment = {0};
 	color_attachment.format = format;
 	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -570,6 +587,8 @@ VkRenderPass create_render_pass(VkFormat format, VkDevice device){
 	render_pass_create_info.pAttachments = &color_attachment;
 	render_pass_create_info.subpassCount = 1;
 	render_pass_create_info.pSubpasses = &subpass;
+	render_pass_create_info.dependencyCount = 1;
+	render_pass_create_info.pDependencies = &dependency;
 
 	VkRenderPass render_pass;
 	if (vkCreateRenderPass(device, &render_pass_create_info, NULL, &render_pass) != VK_SUCCESS) {
@@ -815,4 +834,56 @@ VkCommandBuffer *create_command_buffers(VkDevice device, VkCommandPool command_p
 	}
 
 	return command_buffers;
+}
+
+VkSemaphore create_semaphore(VkDevice device){
+	VkSemaphoreCreateInfo create_info = {0};
+	create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkSemaphore semaphore;
+	if (vkCreateSemaphore(device, &create_info, NULL, &semaphore) != VK_SUCCESS){
+		printf("Error: failed to create semaphore");
+	}
+
+	return semaphore;
+}
+
+void draw_frame(VkDevice device, VkQueue graphics_queue, VkQueue presentation_queue, VkSwapchainKHR swap_chain, VkCommandBuffer *command_buffers, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore){
+	uint32_t image_index;
+	vkAcquireNextImageKHR(device, swap_chain, UINT32_MAX, image_availible_semaphore, VK_NULL_HANDLE, &image_index);
+
+	VkSubmitInfo submit_info = {0};
+	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore wait_semaphores[] = {image_availible_semaphore};
+	VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	submit_info.waitSemaphoreCount = 1;
+	submit_info.pWaitSemaphores = wait_semaphores;
+	submit_info.pWaitDstStageMask = wait_stages;
+
+	submit_info.commandBufferCount = 1;
+	submit_info.pCommandBuffers = &command_buffers[image_index];
+
+	VkSemaphore signal_semaphores[] = {render_finished_semaphore};
+	submit_info.signalSemaphoreCount = 1;
+	submit_info.pSignalSemaphores = signal_semaphores;
+
+	if (vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE) != VK_SUCCESS){
+		printf("Error: failed to submit draw command buffer");
+	}
+
+	VkPresentInfoKHR present_info = {0};
+	present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	present_info.waitSemaphoreCount = 1;
+	present_info.pWaitSemaphores = signal_semaphores;
+	VkSwapchainKHR swap_chains[] = {swap_chain};
+	present_info.swapchainCount = 1;
+	present_info.pSwapchains = swap_chains;
+	present_info.pImageIndices = &image_index;
+
+	present_info.pResults = NULL;
+
+	vkQueuePresentKHR(presentation_queue, &present_info);
+
+	printf("frame completed");
 }
