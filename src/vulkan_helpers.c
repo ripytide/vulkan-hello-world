@@ -850,7 +850,7 @@ VkSemaphore create_semaphore(VkDevice device){
 
 void draw_frame(VkDevice device, VkQueue graphics_queue, VkQueue presentation_queue, VkSwapchainKHR swap_chain, VkCommandBuffer *command_buffers, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore){
 	uint32_t image_index;
-	vkAcquireNextImageKHR(device, swap_chain, UINT32_MAX, image_availible_semaphore, VK_NULL_HANDLE, &image_index);
+	vkAcquireNextImageKHR(device, swap_chain, UINT64_MAX, image_availible_semaphore, VK_NULL_HANDLE, &image_index);
 
 	VkSubmitInfo submit_info = {0};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

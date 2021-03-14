@@ -114,6 +114,8 @@ void mainLoop(GLFWwindow* window, VkDevice device, VkQueue graphics_queue, VkQue
 		glfwPollEvents();
 		draw_frame(device, graphics_queue, presentation_queue, swap_chain, command_buffers, image_availible_semaphore, render_finished_semaphore);
 	}
+
+	vkDeviceWaitIdle(device);
 }
 
 void CleanUp(GLFWwindow *window, VkInstance instance, VkDevice device, VkDebugUtilsMessengerEXT debug_messenger, VkSurfaceKHR surface, VkSwapchainKHR swap_chain, VkImageView *image_views, int image_count, VkPipelineLayout pipeline_layout, VkRenderPass render_pass, VkPipeline graphics_pipeline, VkFramebuffer *framebuffers, VkCommandPool command_pool, VkSemaphore image_availible_semaphore, VkSemaphore render_finished_semaphore) {
